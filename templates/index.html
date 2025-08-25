@@ -1091,37 +1091,178 @@
     <script>
       // ... your existing JavaScript functions ...
     
-      {% if failed_projects %}
-      // Debug version to see exactly what's happening
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log('=== AUTO-CHECK DEBUG ===');
-        console.log('Failed projects from server:', {{ failed_projects | tojson }});
+      // {% if failed_projects %} work
+      // // Debug version to see exactly what's happening
+      // document.addEventListener('DOMContentLoaded', function() {
+      //   console.log('=== AUTO-CHECK DEBUG ===');
+      //   console.log('Failed projects from server:', {{ failed_projects | tojson }});
         
-        // Log current state of the page
-        setTimeout(function() {
-          const projectNames = document.querySelectorAll('.project-name');
-          const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      //   // Log current state of the page
+      //   setTimeout(function() {
+      //     const projectNames = document.querySelectorAll('.project-name');
+      //     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
           
-          console.log('Project name elements found:', projectNames.length);
-          console.log('Checkboxes found:', checkboxes.length);
+      //     console.log('Project name elements found:', projectNames.length);
+      //     console.log('Checkboxes found:', checkboxes.length);
           
-          projectNames.forEach((el, index) => {
-            console.log(`Project ${index + 1}:`, el.textContent.trim());
-          });
+      //     projectNames.forEach((el, index) => {
+      //       console.log(`Project ${index + 1}:`, el.textContent.trim());
+      //     });
           
-          // Now try to auto-check
-          if (projectNames.length > 0) {
-            console.log('Attempting auto-check...');
-            autoCheckProjects({{ failed_projects | tojson }});
+      //     // Now try to auto-check
+      //     if (projectNames.length > 0) {
+      //       console.log('Attempting auto-check...');
+      //       autoCheckProjects({{ failed_projects | tojson }});
+      //     } else {
+      //       console.log('No projects found yet, retrying in 1 second...');
+      //       setTimeout(function() {
+      //         autoCheckProjects({{ failed_projects | tojson }});
+      //       }, 1000);
+      //     }
+      //   }, 500);
+      // });
+      // {% endif %}
+
+  // ... your existing JavaScript functions ...
+
+      {% if failed_projects %}
+      // Auto-check and auto-submit
+      document.addEventListener('DOMContentLoaded', function() {
+        const projectsToCheck = {{ failed_projects | tojson }};
+        console.log('🤖 Auto-checking:', projectsToCheck);
+        
+        function waitAndSubmit() {
+          // Wait for projects to load
+          const projectElements = document.querySelectorAll('.project-name');
+          
+          if (projectElements.length > 0) {
+            console.log('✅ Projects loaded, checking...');
+            const checkedCount = autoCheckProjects(projectsToCheck);
+            
+            if (checkedCount > 0) {
+              // Wait a bit more then submit
+              console.log('⏳ Waiting to submit...');
+              setTimeout(autoSubmitForm, 2000);
+            }
           } else {
-            console.log('No projects found yet, retrying in 1 second...');
-            setTimeout(function() {
-              autoCheckProjects({{ failed_projects | tojson }});
-            }, 1000);
+            console.log('⏳ Waiting for projects to load...');
+            setTimeout(waitAndSubmit, 500);
           }
-        }, 500);
+        }
+        
+        // Start the process
+        setTimeout(waitAndSubmit, 1000);
       });
       {% endif %}
-    </script>
+
+      // Add this new function to auto-submit
+      function autoSubmitForm() {
+        console.log('🚀 Attempting auto-submit...');
+        
+        // Find the submit button
+        const submitButtons = [
+          document.querySelector('button[type="submit"]'),
+          document.querySelector('button.btn-danger'),
+          document.querySelector('button:contains("RESET SELECTED")'),
+          document.querySelector('*:contains("RESET SELECTED"):not(div)')
+        ].filter(btn => btn !== null);
+        
+        console.log('Found buttons:', submitButtons);
+        
+        if (submitButtons.length > 0) {
+          const submitButton = submitButtons[0];
+          console.log('📝 Clicking submit button:', submitButton.textContent.trim());
+          
+          // Simulate a click
+          submitButton.click();
+          console.log('✅ Form submitted automatically!');
+        } else {
+          console.log('❌ Submit button not found');
+          // Try alternative selectors
+          const allButtons = document.querySelectorAll('button');
+          console.log('All buttons on page:', Array.from(allButtons).map(b => b.textContent.trim()));
+        }
+      }
+
+      // Also add this to your existing functions
+      window.autoSubmitForm = autoSubmitForm;
+function autoSubmitForm() {
+    console.log('🚀 Attempting auto-submit...');
+    
+    // Use the exact selector from your button
+    const submitButton = document.querySelector('button.btn-danger[type="submit"]');
+    
+    if (submitButton) {
+        console.log('✅ Found submit button:', submitButton);
+        console.log('Button text:', submitButton.textContent.trim());
+        console.log('Button classes:', submitButton.classList);
+        
+        // Highlight the button so we can see it
+        submitButton.style.outline = '3px solid red';
+        submitButton.style.boxShadow = '0 0 20px rgba(255,0,0,0.5)';
+        submitButton.scrollIntoView({ behavior: 'smooth' });
+        
+        // Click after a short delay
+        setTimeout(() => {
+            console.log('🖱️ Clicking the button...');
+            submitButton.click();
+            console.log('✅ Button clicked! Form should submit now.');
+            
+            // Refresh page after submission
+            setTimeout(() => {
+                console.log('🔄 Refreshing page...');
+                window.location.reload();
+            }, 3000);
+            
+        }, 1000);
+        
+    } else {
+        console.log('❌ Submit button not found with selector');
+        
+        // Debug: Show all buttons on the page
+        const allButtons = document.querySelectorAll('button');
+        console.log('All buttons found:', allButtons.length);
+        
+        allButtons.forEach((btn, index) => {
+            console.log(`Button ${index}:`, {
+                text: btn.textContent.trim(),
+                type: btn.type,
+                classes: btn.className,
+                tag: btn.outerHTML
+            });
+        });
+        
+        // Try alternative selectors
+        setTimeout(tryAlternativeSelectors, 1000);
+    }
+}
+
+function tryAlternativeSelectors() {
+    console.log('🔍 Trying alternative selectors...');
+    
+    const selectorsToTry = [
+        'button[type="submit"]',
+        '.btn-danger',
+        '.btn',
+        'button'
+    ];
+    
+    for (const selector of selectorsToTry) {
+        const button = document.querySelector(selector);
+        if (button) {
+            console.log(`✅ Found button with selector "${selector}":`, button.textContent.trim());
+            button.click();
+            setTimeout(() => window.location.reload(), 3000);
+            return;
+        }
+    }
+    
+    console.log('❌ No buttons found with any selector');
+}
+
+// Also add this to your existing functions
+window.autoSubmitForm = autoSubmitForm;
+window.tryAlternativeSelectors = tryAlternativeSelectors;
+</script>
   </body>
 </html>
