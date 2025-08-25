@@ -1088,7 +1088,40 @@
       });
 
     </script>
-    {% endif %}
+    <script>
+      // ... your existing JavaScript functions ...
+    
+      {% if failed_projects %}
+      // Debug version to see exactly what's happening
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('=== AUTO-CHECK DEBUG ===');
+        console.log('Failed projects from server:', {{ failed_projects | tojson }});
+        
+        // Log current state of the page
+        setTimeout(function() {
+          const projectNames = document.querySelectorAll('.project-name');
+          const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+          
+          console.log('Project name elements found:', projectNames.length);
+          console.log('Checkboxes found:', checkboxes.length);
+          
+          projectNames.forEach((el, index) => {
+            console.log(`Project ${index + 1}:`, el.textContent.trim());
+          });
+          
+          // Now try to auto-check
+          if (projectNames.length > 0) {
+            console.log('Attempting auto-check...');
+            autoCheckProjects({{ failed_projects | tojson }});
+          } else {
+            console.log('No projects found yet, retrying in 1 second...');
+            setTimeout(function() {
+              autoCheckProjects({{ failed_projects | tojson }});
+            }, 1000);
+          }
+        }, 500);
+      });
+      {% endif %}
     </script>
   </body>
 </html>

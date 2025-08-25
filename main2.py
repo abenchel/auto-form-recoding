@@ -174,33 +174,57 @@ app = Flask(__name__)
 app.secret_key = 'hy'  # <-- Add this line
 
 project = ProjectBotter()
-
-
 @app.route("/", methods=["GET"])
 def index():
     login = request.args.get("login", "").strip()
-    projects_param = request.args.get("projects", "")
     
     if login:
         # Get user projects from 42 API
         [user, projects] = project.get_list_of_projects(login)
         
-        # Parse projects from URL parameter
-        failed_projects = []
-        if projects_param:
-            failed_projects = [p.replace("+", " ") for p in projects_param.split(",")]
+        # Get failed projects from global store
+        failed_projects = USER_PROJECTS_STORE.get(login, [])
         
         print(f"🔍 Checking projects for {login}")
-        print(f"📋 Failed projects from URL: {failed_projects}")
+        print(f"📋 Failed projects from store: {failed_projects}")
+        
+        # DEBUG: Print what will be sent to template
+        print(f"📤 Sending to template: {failed_projects}")
         
         return render_template("index.html", 
                            projects=projects,
                            user=user,
                            login=login,
-                           failed_projects_list=failed_projects,  # Pass to template
+                           failed_projects=failed_projects,  # Make sure this is correct
                            all_projects_count=len(projects))
     
     return render_template("index.html")
+
+# @app.route("/", methods=["GET"]) also work 
+# def index():
+#     login = request.args.get("login", "").strip()
+#     projects_param = request.args.get("projects", "")
+    
+#     if login:
+#         # Get user projects from 42 API
+#         [user, projects] = project.get_list_of_projects(login)
+        
+#         # Parse projects from URL parameter
+#         failed_projects = []
+#         if projects_param:
+#             failed_projects = [p.replace("+", " ") for p in projects_param.split(",")]
+        
+#         print(f"🔍 Checking projects for {login}")
+#         print(f"📋 Failed projects from URL: {failed_projects}")
+        
+#         return render_template("index.html", 
+#                            projects=projects,
+#                            user=user,
+#                            login=login,
+#                            failed_projects_list=failed_projects,  # Pass to template
+#                            all_projects_count=len(projects))
+    
+#     return render_template("index.html")
 
 # @app.route("/", methods=["GET"])    also work 
 # def index():
@@ -253,6 +277,46 @@ def index():
 
 
 
+# @app.route('/api/data', methods=['POST']) true work 
+# def handle_data():
+#     """Endpoint for form submissions from Google Apps Script"""
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             return jsonify({"error": "No data provided"}), 400
+        
+#         # Google Apps Script sends 'username' and 'days'
+#         login = data.get('username')  # Changed from 'login' to 'username'
+#         failed_projects = data.get('days', [])  # Changed from 'projects' to 'days'
+        
+#         print(f"📥 Received data - Login: {login}, Projects: {failed_projects}")
+        
+#         if not login:
+#             return jsonify({"error": "Login required"}), 400
+        
+#         # Store failed projects in session
+#         session['failed_projects'] = failed_projects
+#         global CURRENT_LOGIN
+#         CURRENT_LOGIN = login
+        
+#         # Open browser with the login after 1 second
+#         Timer(1, lambda: webbrowser.open_new(f"http://localhost:4444/?login={login}")).start()
+        
+#         return jsonify({
+#             "status": "success", 
+#             "login": login,
+#             "received_projects": failed_projects,
+#             "redirect_url": f"http://localhost:4444/?login={login}"
+#         })
+        
+#     except Exception as e:
+#         print(f"❌ Error in /api/data: {str(e)}")
+#         return jsonify({"error": str(e)}), 500
+
+
+# Global storage for projects
+USER_PROJECTS_STORE = {}
+
 @app.route('/api/data', methods=['POST'])
 def handle_data():
     """Endpoint for form submissions from Google Apps Script"""
@@ -261,35 +325,30 @@ def handle_data():
         if not data:
             return jsonify({"error": "No data provided"}), 400
         
-        # Google Apps Script sends 'username' and 'days'
-        login = data.get('username')  # Changed from 'login' to 'username'
-        failed_projects = data.get('days', [])  # Changed from 'projects' to 'days'
+        login = data.get('username')
+        failed_projects = data.get('days', [])
         
         print(f"📥 Received data - Login: {login}, Projects: {failed_projects}")
         
         if not login:
             return jsonify({"error": "Login required"}), 400
         
-        # Store failed projects in session
-        session['failed_projects'] = failed_projects
-        global CURRENT_LOGIN
-        CURRENT_LOGIN = login
+        # Store in global variable
+        global USER_PROJECTS_STORE
+        USER_PROJECTS_STORE[login] = failed_projects
         
-        # Open browser with the login after 1 second
+        # Open browser with the login
         Timer(1, lambda: webbrowser.open_new(f"http://localhost:4444/?login={login}")).start()
         
         return jsonify({
             "status": "success", 
             "login": login,
-            "received_projects": failed_projects,
-            "redirect_url": f"http://localhost:4444/?login={login}"
+            "received_projects": failed_projects
         })
         
     except Exception as e:
         print(f"❌ Error in /api/data: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-
 
 
 # @app.route("/", methods=["GET"])
