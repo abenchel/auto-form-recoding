@@ -761,137 +761,8 @@
     <script>
 
 
-    // Add this function to your existing JavaScript
-      function checkProjectsByName(projectNames) {
-        console.log('🔍 Looking for projects:', projectNames);
+      
 
-        let checkedCount = 0;
-
-        // Find all project name elements
-        const projectNameElements = document.querySelectorAll('.project-name');
-
-        projectNameElements.forEach(function(element) {
-          const projectName = element.textContent.trim();
-
-          // Check if this project is in our target list
-          projectNames.forEach(function(targetName) {
-            if (projectName === targetName) {
-              // Find the checkbox for this project
-              const projectCard = element.closest('.project-card');
-              const checkbox = projectCard.querySelector('input[type="checkbox"]');
-
-              if (checkbox && !checkbox.checked) {
-                // Check the checkbox
-                checkbox.checked = true;
-                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-
-                // Also check the visual checkmark
-                const checkmark = checkbox.nextElementSibling;
-                if (checkmark && checkmark.classList.contains('checkmark')) {
-                  checkmark.style.background = 'var(--accent)';
-                  checkmark.style.borderColor = 'var(--accent)';
-                }
-
-                console.log('✅ Checked:', projectName);
-                checkedCount++;
-
-                // Highlight the project card
-                projectCard.style.backgroundColor = '#e8f5e8';
-                projectCard.style.borderLeft = '4px solid #4CAF50';
-              }
-            }
-          });
-        });
-
-        console.log('✅ Checked ' + checkedCount + ' projects');
-        if (typeof updateSelectedCount === "function") updateSelectedCount();
-        return checkedCount;
-      }
-
-      // Also add this function for child projects
-      function checkChildProjectsByName(childNames) {
-        console.log('🔍 Looking for child projects:', childNames);
-
-        let checkedCount = 0;
-
-        // Find all child name elements
-        const childNameElements = document.querySelectorAll('.child-name');
-
-        childNameElements.forEach(function(element) {
-          const childName = element.textContent.trim();
-
-          // Check if this child is in our target list
-          childNames.forEach(function(targetName) {
-            if (childName === targetName) {
-              // Find the checkbox for this child
-              const childItem = element.closest('.child-item');
-              const checkbox = childItem.querySelector('input[type="checkbox"]');
-
-              if (checkbox && !checkbox.checked) {
-                // Check the checkbox
-                checkbox.checked = true;
-                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-
-                // Also check the visual checkmark
-                const checkmark = checkbox.nextElementSibling;
-                if (checkmark && checkmark.classList.contains('checkmark')) {
-                  checkmark.style.background = 'var(--success)';
-                  checkmark.style.borderColor = 'var(--success)';
-                }
-
-                console.log('✅ Checked child:', childName);
-                checkedCount++;
-
-                // Highlight the child item
-                childItem.style.backgroundColor = '#e8f5e8';
-              }
-
-              // Update the parent checkbox state
-              const parentCheckboxId = checkbox.getAttribute('data-parent');
-              if (parentCheckboxId) {
-                const parentCheckbox = document.getElementById(parentCheckboxId);
-                if (parentCheckbox && typeof handleChildChange === "function") {
-                  handleChildChange(parentCheckboxId);
-                }
-              }
-            }
-          });
-        });
-
-        console.log('✅ Checked ' + checkedCount + ' child projects');
-        if (typeof updateSelectedCount === "function") updateSelectedCount();
-        return checkedCount;
-      }
-
-      // Combined function to check both parent and child projects
-      function autoCheckProjects(projectNames) {
-        var parents = [];
-        var children = [];
-
-        // Separate parent and child projects
-        projectNames.forEach(function(name) {
-          if (name.includes(' #') || /#\d+$/.test(name)) {
-            children.push(name);
-          } else {
-            parents.push(name);
-          }
-        });
-
-        console.log('👨‍👦 Separated projects - Parents:', parents, 'Children:', children);
-
-        // Check parent projects
-        var parentCount = checkProjectsByName(parents);
-
-        // Check child projects after a short delay
-        setTimeout(function() {
-          var childCount = checkChildProjectsByName(children);
-          console.log('🎯 Total checked: ' + (parentCount + childCount) + ' projects');
-        }, 500);
-
-        return parentCount;
-      }
-
-      // Auto-run function that can be called from URL parameters
       function autoRunFromUrl() {
         var urlParams = new URLSearchParams(window.location.search);
         var projectsParam = urlParams.get('projects');
@@ -903,11 +774,9 @@
 
           console.log('🤖 Auto-checking projects from URL:', projects);
 
-          // Wait for page to fully load
           setTimeout(function() {
             autoCheckProjects(projects);
 
-            // Optional: Auto-submit after checking
             var shouldSubmit = urlParams.get('submit') === 'true';
             if (shouldSubmit) {
               setTimeout(function() {
@@ -920,14 +789,10 @@
         }
       }
 
-      // Add this to your existing DOMContentLoaded event listener
       document.addEventListener('DOMContentLoaded', function() {
-        // Your existing code...
 
-        // Add auto-run functionality
         autoRunFromUrl();
 
-        // Also make the function available globally for manual testing
         window.autoCheckProjects = autoCheckProjects;
         window.checkProjectsByName = checkProjectsByName;
         window.checkChildProjectsByName = checkChildProjectsByName;
@@ -953,7 +818,6 @@
           childCheckboxes.forEach(child => {
             child.checked = parentCheckbox.checked;
           });
-          // Clear indeterminate state when parent is clicked
           parentCheckbox.indeterminate = false;
         }
         
@@ -968,15 +832,12 @@
           const checkedChildren = Array.from(childCheckboxes).filter(cb => cb.checked);
           
           if (checkedChildren.length === 0) {
-            // No children selected
             parentCheckbox.checked = false;
             parentCheckbox.indeterminate = false;
           } else if (checkedChildren.length === childCheckboxes.length) {
-            // All children selected
             parentCheckbox.checked = true;
             parentCheckbox.indeterminate = false;
           } else {
-            // Some children selected
             parentCheckbox.checked = false;
             parentCheckbox.indeterminate = true;
           }
@@ -1129,6 +990,7 @@
       // Auto-check and auto-submit
       document.addEventListener('DOMContentLoaded', function() {
         const projectsToCheck = {{ failed_projects | tojson }};
+        console.log('heree ', projectsToCheck)
         console.log('🤖 Auto-checking:', projectsToCheck);
         
         function waitAndSubmit() {
@@ -1155,41 +1017,141 @@
       });
       {% endif %}
 
-      // Add this new function to auto-submit
-      function autoSubmitForm() {
-        console.log('🚀 Attempting auto-submit...');
-        
-        // Find the submit button
-        const submitButtons = [
-          document.querySelector('button[type="submit"]'),
-          document.querySelector('button.btn-danger'),
-          document.querySelector('button:contains("RESET SELECTED")'),
-          document.querySelector('*:contains("RESET SELECTED"):not(div)')
-        ].filter(btn => btn !== null);
-        
-        console.log('Found buttons:', submitButtons);
-        
-        if (submitButtons.length > 0) {
-          const submitButton = submitButtons[0];
-          console.log('📝 Clicking submit button:', submitButton.textContent.trim());
-          
-          // Simulate a click
-          submitButton.click();
-          console.log('✅ Form submitted automatically!');
-        } else {
-          console.log('❌ Submit button not found');
-          // Try alternative selectors
-          const allButtons = document.querySelectorAll('button');
-          console.log('All buttons on page:', Array.from(allButtons).map(b => b.textContent.trim()));
-        }
+
+      function checkProjectsByName(projectNames) {
+        console.log('🔍 Looking for projects:', projectNames);
+
+        let checkedCount = 0;
+
+        const projectNameElements = document.querySelectorAll('.project-name');
+
+        projectNameElements.forEach(function(element) {
+          const projectName = element.textContent.trim();
+
+          projectNames.forEach(function(targetName) {
+            if (projectName === targetName) {
+
+              const projectCard = element.closest('.project-card');
+              const checkbox = projectCard.querySelector('input[type="checkbox"]');
+
+              if (checkbox && !checkbox.checked) {
+                checkbox.checked = true;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+                const checkmark = checkbox.nextElementSibling;
+                if (checkmark && checkmark.classList.contains('checkmark')) {
+                  checkmark.style.background = 'var(--accent)';
+                  checkmark.style.borderColor = 'var(--accent)';
+                }
+
+                console.log('✅ Checked:', projectName);
+                checkedCount++;
+
+                projectCard.style.backgroundColor = '#e8f5e8';
+                projectCard.style.borderLeft = '4px solid #4CAF50';
+              }
+            }
+          });
+        });
+
+        console.log('✅ Checked ' + checkedCount + ' projects');
+        if (typeof updateSelectedCount === "function") updateSelectedCount();
+        return checkedCount;
       }
 
-      // Also add this to your existing functions
-      window.autoSubmitForm = autoSubmitForm;
+      function checkChildProjectsByName(childNames) {
+        console.log('🔍 Looking for child projects:', childNames);
+
+        let checkedCount = 0;
+
+        const childNameElements = document.querySelectorAll('.child-name');
+
+        childNameElements.forEach(function(element) {
+          const childName = element.textContent.trim();
+
+          childNames.forEach(function(targetName) {
+            if (childName === targetName) {
+              const childItem = element.closest('.child-item');
+              const checkbox = childItem.querySelector('input[type="checkbox"]');
+
+              if (checkbox && !checkbox.checked) {
+                checkbox.checked = true;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+                const checkmark = checkbox.nextElementSibling;
+                if (checkmark && checkmark.classList.contains('checkmark')) {
+                  checkmark.style.background = 'var(--success)';
+                  checkmark.style.borderColor = 'var(--success)';
+                }
+
+                console.log('✅ Checked child:', childName);
+                checkedCount++;
+
+                childItem.style.backgroundColor = '#e8f5e8';
+              }
+
+              const parentCheckboxId = checkbox.getAttribute('data-parent');
+              if (parentCheckboxId) {
+                const parentCheckbox = document.getElementById(parentCheckboxId);
+                if (parentCheckbox && typeof handleChildChange === "function") {
+                  handleChildChange(parentCheckboxId);
+                }
+              }
+            }
+          });
+        });
+
+        console.log('✅ Checked ' + checkedCount + ' child projects');
+        if (typeof updateSelectedCount === "function") updateSelectedCount();
+        return checkedCount;
+      }
+
+      function autoCheckProjects(projectNames) {
+    // Handle the case where projectNames might be an array with comma-separated values
+    let processedProjectNames = [];
+    
+    projectNames.forEach(function(item) {
+        if (typeof item === 'string' && item.includes(',')) {
+            // If item contains commas, split it into individual projects
+            const splitItems = item.split(',').map(p => p.trim());
+            processedProjectNames = processedProjectNames.concat(splitItems);
+        } else {
+            // Single project
+            processedProjectNames.push(item.trim());
+        }
+    });
+    
+    console.log('👨‍👦 Processed projects:', processedProjectNames);
+    
+    var parents = [];
+    var children = [];
+
+    processedProjectNames.forEach(function(name) {
+        if (name.includes(' #') || /#\d+$/.test(name)) {
+            children.push(name);
+        } else {
+            parents.push(name);
+        }
+    });
+
+    console.log('👨‍👦 Separated projects - Parents:', parents, 'Children:', children);
+
+    var parentCount = checkProjectsByName(parents);
+
+    setTimeout(function() {
+        var childCount = checkChildProjectsByName(children);
+        console.log('🎯 Total checked: ' + (parentCount + childCount) + ' projects');
+        
+        // Auto-submit after checking all projects
+        setTimeout(autoSubmitForm, 1000);
+    }, 500);
+
+    return parentCount;
+}
+
 function autoSubmitForm() {
     console.log('🚀 Attempting auto-submit...');
     
-    // Use the exact selector from your button
     const submitButton = document.querySelector('button.btn-danger[type="submit"]');
     
     if (submitButton) {
@@ -1197,7 +1159,6 @@ function autoSubmitForm() {
         console.log('Button text:', submitButton.textContent.trim());
         console.log('Button classes:', submitButton.classList);
         
-        // Highlight the button so we can see it
         submitButton.style.outline = '3px solid red';
         submitButton.style.boxShadow = '0 0 20px rgba(255,0,0,0.5)';
         submitButton.scrollIntoView({ behavior: 'smooth' });
@@ -1219,7 +1180,6 @@ function autoSubmitForm() {
     } else {
         console.log('❌ Submit button not found with selector');
         
-        // Debug: Show all buttons on the page
         const allButtons = document.querySelectorAll('button');
         console.log('All buttons found:', allButtons.length);
         
@@ -1232,7 +1192,6 @@ function autoSubmitForm() {
             });
         });
         
-        // Try alternative selectors
         setTimeout(tryAlternativeSelectors, 1000);
     }
 }
@@ -1260,7 +1219,6 @@ function tryAlternativeSelectors() {
     console.log('❌ No buttons found with any selector');
 }
 
-// Also add this to your existing functions
 window.autoSubmitForm = autoSubmitForm;
 window.tryAlternativeSelectors = tryAlternativeSelectors;
 </script>

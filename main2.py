@@ -200,120 +200,6 @@ def index():
     
     return render_template("index.html")
 
-# @app.route("/", methods=["GET"]) also work 
-# def index():
-#     login = request.args.get("login", "").strip()
-#     projects_param = request.args.get("projects", "")
-    
-#     if login:
-#         # Get user projects from 42 API
-#         [user, projects] = project.get_list_of_projects(login)
-        
-#         # Parse projects from URL parameter
-#         failed_projects = []
-#         if projects_param:
-#             failed_projects = [p.replace("+", " ") for p in projects_param.split(",")]
-        
-#         print(f"🔍 Checking projects for {login}")
-#         print(f"📋 Failed projects from URL: {failed_projects}")
-        
-#         return render_template("index.html", 
-#                            projects=projects,
-#                            user=user,
-#                            login=login,
-#                            failed_projects_list=failed_projects,  # Pass to template
-#                            all_projects_count=len(projects))
-    
-#     return render_template("index.html")
-
-# @app.route("/", methods=["GET"])    also work 
-# def index():
-#     login = request.args.get("login", "").strip()
-    
-#     if login:
-#         # Debug session data
-#         print(f"🎯 Session data: {dict(session)}")
-#         print(f"🔍 Looking for login: {login}")
-        
-#         # Get user projects from 42 API
-#         [user, projects] = project.get_list_of_projects(login)
-        
-#         # Get failed projects from session
-#         failed_projects = session.get('failed_projects', [])
-        
-#         print(f"📋 Failed projects received: {failed_projects}")
-#         print(f"📊 All projects from API: {[p['name'] for p in projects]}")
-        
-#         # Mark projects as checked
-#         checked_count = 0
-#         for project_group in projects:
-#             project_name = project_group['name']
-            
-#             if project_name in failed_projects:
-#                 project_group['checked'] = True
-#                 checked_count += 1
-#                 print(f"✅ CHECKED: {project_name}")
-#             else:
-#                 print(f"❌ NOT CHECKED: {project_name}")
-            
-#             # Check children
-#             for child in project_group.get('children', []):
-#                 child_name = child['name']
-#                 if child_name in failed_projects:
-#                     child['checked'] = True
-#                     checked_count += 1
-#                     print(f"✅ CHECKED CHILD: {child_name}")
-        
-#         print(f"🔢 Total checked projects: {checked_count}")
-        
-#         return render_template("index.html", 
-#                            projects=projects,
-#                            user=user,
-#                            login=login,
-#                            all_projects_count=len(projects),
-#                            checked_count=checked_count)
-    
-#     return render_template("index.html")
-
-
-
-# @app.route('/api/data', methods=['POST']) true work 
-# def handle_data():
-#     """Endpoint for form submissions from Google Apps Script"""
-#     try:
-#         data = request.get_json()
-#         if not data:
-#             return jsonify({"error": "No data provided"}), 400
-        
-#         # Google Apps Script sends 'username' and 'days'
-#         login = data.get('username')  # Changed from 'login' to 'username'
-#         failed_projects = data.get('days', [])  # Changed from 'projects' to 'days'
-        
-#         print(f"📥 Received data - Login: {login}, Projects: {failed_projects}")
-        
-#         if not login:
-#             return jsonify({"error": "Login required"}), 400
-        
-#         # Store failed projects in session
-#         session['failed_projects'] = failed_projects
-#         global CURRENT_LOGIN
-#         CURRENT_LOGIN = login
-        
-#         # Open browser with the login after 1 second
-#         Timer(1, lambda: webbrowser.open_new(f"http://localhost:4444/?login={login}")).start()
-        
-#         return jsonify({
-#             "status": "success", 
-#             "login": login,
-#             "received_projects": failed_projects,
-#             "redirect_url": f"http://localhost:4444/?login={login}"
-#         })
-        
-#     except Exception as e:
-#         print(f"❌ Error in /api/data: {str(e)}")
-#         return jsonify({"error": str(e)}), 500
-
-
 # Global storage for projects
 USER_PROJECTS_STORE = {}
 
@@ -337,8 +223,9 @@ def handle_data():
         global USER_PROJECTS_STORE
         USER_PROJECTS_STORE[login] = failed_projects
         
-        # Open browser with the login
-        Timer(1, lambda: webbrowser.open_new(f"http://localhost:4444/?login={login}")).start()
+        # Only open browser if failed_projects is not empty
+        if failed_projects:
+            Timer(1, lambda: webbrowser.open_new(f"http://localhost:4444/?login={login}")).start()
         
         return jsonify({
             "status": "success", 
@@ -350,33 +237,6 @@ def handle_data():
         print(f"❌ Error in /api/data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-
-# @app.route("/", methods=["GET"])
-# def index():
-#     login = request.args.get("login", "").strip()
-#     projects_param = request.args.get("projects", "")
-    
-#     if login:
-#         # Get user projects from 42 API
-#         [user, projects] = project.get_list_of_projects(login)
-        
-#         # Parse projects from URL parameter
-#         failed_projects = []
-#         if projects_param:
-#             failed_projects = [p.replace("+", " ") for p in projects_param.split(",")]
-        
-#         print(f"🔍 Checking projects for {login}")
-#         print(f"📋 Failed projects from URL: {failed_projects}")
-        
-#         # Pass the failed projects list to the template for JavaScript
-#         return render_template("index.html", 
-#                            projects=projects,
-#                            user=user,
-#                            login=login,
-#                            failed_projects_list=failed_projects,  # Add this
-#                            all_projects_count=len(projects))
-    
-#     return render_template("index.html")
 
 @app.route('/api/submit', methods=['POST'])
 def handle_submit():
@@ -396,8 +256,9 @@ def handle_submit():
     global CURRENT_LOGIN
     CURRENT_LOGIN = login
     
-    # Open browser with the login after 1 second
-    Timer(1, lambda: webbrowser.open_new(f"http://localhost:4444/?login={login}")).start()
+    # Only open browser if failed_projects is not empty
+    if failed_projects:
+        Timer(1, lambda: webbrowser.open_new(f"http://localhost:4444/?login={login}")).start()
     
     return jsonify({
         "status": "success", 
